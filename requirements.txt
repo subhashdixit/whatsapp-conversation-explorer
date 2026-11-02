@@ -1,13 +1,4 @@
-# Historical prototype dependencies: preserved for reference.
-# Supported maintained-release installation and exact locks: DEPENDENCIES.md.
-pandas==1.3.5
-numpy==1.22.4
-streamlit
-urlextract
-wordcloud
-emoji==2.2.0
-matplotlib
-seaborn==0.11.2
-scipy
-nltk==3.7
-scikit-learn==1.2.1
+# No third-party Python packages are needed by the maintained browser app.
+# Use Node.js 22.23.4 / npm 10.9.9 and run: npm ci
+# package-lock.json pins all JavaScript development dependencies.
+# See DEPENDENCIES.md. Historical prototype requirements: archive/prototype-requirements.in
