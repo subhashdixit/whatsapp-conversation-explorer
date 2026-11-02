@@ -1,5 +1,8 @@
 # WhatsApp Conversation Explorer
 
+**Reproducible versions:** [Dependency versions and exact setup](DEPENDENCIES.md).
+
+
 [Open the application](https://subhashdixit.github.io/whatsapp-conversation-explorer/) · [Report an issue](https://github.com/subhashdixit/whatsapp-conversation-explorer/issues)
 
 Turn a WhatsApp text export into local, inspectable activity patterns without uploading private conversations. This app extends the earlier portfolio parser with conversation-session and adjacent speaker-transition summaries.
