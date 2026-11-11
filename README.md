@@ -2,7 +2,7 @@
 
 ## 1. Project overview
 
-Explore activity, conversation sessions, and speaker changes from a WhatsApp text export processed locally in the browser.
+Turn a WhatsApp text export into an activity summary that can be inspected locally. The repository implements format-aware parsing, session and speaker-transition statistics, charts, and alias-based aggregate exports.
 
 [Live demo](https://subhashdixit.github.io/whatsapp-conversation-explorer/) · [Source repository](https://github.com/subhashdixit/whatsapp-conversation-explorer)
 
@@ -10,7 +10,17 @@ Explore activity, conversation sessions, and speaker changes from a WhatsApp tex
 
 ## 2. Motivation and problem statement
 
-A chat export is a chronological text file. It is difficult to inspect activity by participant, separate system entries, or identify where format differences affect counts. This tool parses supported exports, reports its coverage, and provides filterable aggregates while keeping private messages on the device.
+### Objective
+
+Measure who participated and when, where activity clustered, and how sessions and adjacent speaker changes appear in a supported WhatsApp export.
+
+### Problem statement
+
+Given a chronological text export, recognize message headers, join continuation lines, separate system entries, and report parsing coverage before calculating aggregates. Date-order and format differences can change which records are counted.
+
+### Motivation
+
+A raw export is difficult to review by participant or time period, and a conversation can contain private text. Local processing lets users inspect date and participant patterns, see which lines the parser recognized, and share an alias-based aggregate export.
 
 ## 3. Solution and scope
 
