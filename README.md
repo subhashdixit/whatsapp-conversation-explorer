@@ -1,13 +1,18 @@
 # WhatsApp Conversation Explorer
 
-**Reproducible versions:** [Dependency versions and exact setup](DEPENDENCIES.md).
+## 1. Project overview
 
+Explore activity, conversation sessions, and speaker changes from a WhatsApp text export processed locally in the browser.
 
-[Open the application](https://subhashdixit.github.io/whatsapp-conversation-explorer/) · [Report an issue](https://github.com/subhashdixit/whatsapp-conversation-explorer/issues)
+[Live demo](https://subhashdixit.github.io/whatsapp-conversation-explorer/) · [Source repository](https://github.com/subhashdixit/whatsapp-conversation-explorer)
 
-Turn a WhatsApp text export into local, inspectable activity patterns without uploading private conversations. This app extends the earlier portfolio parser with conversation-session and adjacent speaker-transition summaries.
+![WhatsApp Conversation Explorer main screen](docs/images/application.png)
 
-## What the finished application does
+## 2. Motivation and problem statement
+
+A chat export is a chronological text file. It is difficult to inspect activity by participant, separate system entries, or identify where format differences affect counts. This tool parses supported exports, reports its coverage, and provides filterable aggregates while keeping private messages on the device.
+
+## 3. Solution and scope
 
 - Import supported Android/iOS text exports, choose DMY or MDY and analyze in a Web Worker.
 - Filter activity by participant and date, compare monthly/hourly counts and inspect parser coverage.
@@ -15,15 +20,59 @@ Turn a WhatsApp text export into local, inspectable activity patterns without up
 - Keep aliases by default, optionally show names locally, and export aggregate alias counts.
 - Clear the worker and result without persisting chat bodies.
 
-## Use the application step by step
+## 4. Quick start and usage
 
-1. Open the live application. Read the input labels and scope panel.
-2. Start with the included example to understand the output.
-3. Replace it with your own supported input. Files are processed locally unless you explicitly choose a server feature and consent to it.
-4. Run the analysis and inspect the visual output together with its limitations.
-5. Export your results when the tool offers a download. Keep your own copy; a browser tab is not a durable data store.
+1. Open the live demo and load its synthetic chat or choose a supported WhatsApp text export.
+2. Select DMY or MDY to match the export and run the analysis.
+3. Inspect parser coverage, filter activity by date or participant, and compare the full-chat session and speaker-change summaries.
+4. Download alias-level aggregate counts or clear the analysis.
 
-## Concepts, algorithms and interpretation
+## 5. High-level architecture
+
+```mermaid
+flowchart LR
+    A["WhatsApp text export"] --> B["Browser application"] --> C["Local Web Worker"] --> D["Aggregate charts and CSV"]
+```
+
+## 6. End-to-end request workflow
+
+```mermaid
+sequenceDiagram
+    actor Visitor
+    participant UI as Application
+    participant Logic as Processing layer
+    Visitor->>UI: Choose chat and date order
+    UI->>Logic: Validate, parse and aggregate in the worker
+    alt Valid input
+        Logic-->>UI: Coverage, activity, and session statistics
+        UI-->>Visitor: Render or export the result
+    else Invalid input
+        Logic-->>UI: Input error
+        UI-->>Visitor: Show actionable feedback
+    end
+```
+
+## 7. Data sources, inputs, and outputs
+
+Original Whatsapp_Chat_Analyzer_WebApp code retained. The maintained parser and chart helpers were adapted from the owner’s earlier `whatsapp-chat-insights` portfolio app. The included 240-message fixture is synthetic with fictional participants, not a personal chat.
+
+Inputs are a UTF-8 text export and a date-order choice. Output includes parser coverage, date/hour counts, participant aggregates, session summaries, and adjacent speaker-transition gaps.
+
+## 8. Data flow and ETL pipeline
+
+```mermaid
+flowchart LR
+    A["Decode text"] --> B["Parse headers and continuation lines"] --> C["Separate system entries"] --> D["Build aliases and sessions"] --> E["Aggregate activity and export alias counts"]
+```
+
+## 9. Low-level design and interfaces
+
+```mermaid
+flowchart LR
+    A["app.js: input and state"] --> B["worker.js: local analysis"] --> C["parser.js and engine.js: parsing and statistics"] --> D["charts.js: SVG and tables"]
+```
+
+## 10. Concepts and algorithms
 
 ### Parse first, measure second
 
@@ -31,28 +80,32 @@ A validated timestamp header starts a message; continuation lines attach to it. 
 
 ### Conversation sessions and transitions
 
-The first message starts a session. A gap over 60 minutes starts another; a backwards timestamp is reported and starts a new session rather than producing a negative gap. When adjacent sender IDs differ within a session, record their gap. Self-message runs do not create transitions. For gaps [1,3], median = 2 minutes. These are observations about adjacency, not measured replies: a sender may be responding to something else or reading offline. Full-chat transition statistics are deliberately labelled separately from filtered activity charts.
+The first message starts a session. A gap over 60 minutes starts another; a backwards timestamp is reported and starts a new session rather than producing a negative gap. When adjacent sender IDs differ within a session, record their gap. Self-message runs do not create transitions. These are observations about adjacency, not measured replies: a sender may be responding to something else or reading offline. Full-chat transition statistics are deliberately labelled separately from filtered activity charts.
 
 ### Counts and visual interpretation
 
 Message counts are exact for recognized parsed records. Words and media markers use heuristics; emoji count uses grapheme segmentation when the browser supports it. Monthly and wall-clock-hour charts expose activity distribution, not sentiment or relationship quality. Exported CSV uses aliases and omits word content. Private words can still appear in an optional local frequency panel; avoid sharing screenshots of it unintentionally.
 
-## Architecture and data flow
+## 11. Technology choices and dependencies
 
-```mermaid
-flowchart LR
-  Input[Validated example or user input] --> Logic[Browser JavaScript engine]
-  Logic --> Charts[Accessible results and SVG charts]
-  Logic --> Export[Local downloadable results]
-  Git[Versioned main branch] --> CI[Formatting, lint and behavior tests]
-  CI --> Pages[Publish site only to GitHub Pages]
-```
+| Technology | Role and rationale |
+| --- | --- |
+| JavaScript ES modules | Keep parsing, aggregation, and interface logic separate. |
+| Web Worker | Process bounded chat input away from the UI thread. |
+| SVG and HTML tables | Display aggregates with readable labels and structure. |
+| Node and GitHub Actions | Exercise parser and transition contracts before publishing. |
 
-HTML provides the accessible page structure, CSS handles responsive layout, and ES modules separate calculation from user interaction. Pure calculation functions can run in Node tests without a browser. SVG charts scale with the screen; they use explicit axes, labels and legends. CSV exports escape spreadsheet formula prefixes in text cells.
+[Dependency versions and reproducible setup](DEPENDENCIES.md)
 
-The chat parser runs in `site/worker.js` and returns aggregates rather than message bodies. `site/parser.js` handles timestamps and activity; `site/engine.js` adds conversation-turn statistics; `site/charts.js` renders accessible tables and SVG. The source CSP permits only same-origin scripts/worker/network and blocks object embedding. This application makes no chat-content API requests.
+## 12. Training, inference, and evaluation
 
-## Run locally from scratch
+The app computes deterministic statistics from each imported export. It has no fitted model. Parser tests cover supported timestamp variants and invalid input. Transition tests exercise session gaps and adjacent speaker changes. Run `npm test`. [Test sources](tests/)
+
+## 13. Limitations and data handling
+
+10 MiB, 200,000 lines, 100,000 messages and 5,000 participants. Localized unsupported timestamp markers and quoted messages that resemble new headers can affect parsing. No timezone or daylight-saving inference. Chats are not stored by app code, but normal website requests carry routine network metadata. Browser memory and files remain under the user’s device controls.
+
+## 14. Installation and local setup
 
 Install Node.js 22 and Python 3 for a local static HTTP server. Python is not a production backend for this app.
 
@@ -69,7 +122,7 @@ python3 -m http.server 8000 --directory site
 
 Open http://localhost:8000. Use HTTP rather than double-clicking HTML so that module imports and local data fetches work consistently. No production API secret belongs in `site/`.
 
-## Coding structure
+## 15. Repository structure
 
 ```text
 site/
@@ -85,7 +138,12 @@ archive/           # original README and retired workflows where present
 
 Original source files, notebooks and historical artifacts remain in the repository for comparison. The release publishes only `site/`; old source directories and datasets are not automatically exposed by the application.
 
-## CI/CD and deployment
+## 16. Deployment and operations
+
+```mermaid
+flowchart LR
+    A["GitHub main"] --> B["GitHub Actions checks"] --> C["Publish site directory"] --> D["GitHub Pages"]
+```
 
 CI means continuous integration: each pull request and main-branch push installs exact lockfile dependencies, checks formatting, lints JavaScript, runs meaningful behavior tests and checks module syntax. A failed check stops publishing. CD means continuous deployment: after the required `Build and test` check succeeds on `main`, GitHub Actions uploads `site/` and GitHub Pages serves it over HTTPS.
 
@@ -101,16 +159,8 @@ A commit identifies exactly which source was deployed. Inspect the Actions deplo
 
 Docker packages code and dependencies into a reproducible runtime. This static app does not require a container: Pages serves the same versioned files directly, with less operating work and no container cold starts. A container becomes useful if adding a Python backend; then secrets, patches, resource costs and persistent storage require separate management.
 
-## Data provenance and attribution
+## 17. License, credits, and support
 
-Original Whatsapp_Chat_Analyzer_WebApp code retained. The maintained parser and chart helpers were adapted from the owner’s earlier `whatsapp-chat-insights` portfolio app. The included 240-message fixture is synthetic with fictional participants, not a personal chat.
+Project by **Subhash Dixit**. The repository has no standalone code license file. Dataset and dependency terms are described separately where applicable. Report bugs or documentation issues with synthetic reproduction inputs.
 
-## Practical limits
-
-10 MiB, 200,000 lines, 100,000 messages and 5,000 participants. Localized unsupported timestamp markers and quoted messages that resemble new headers can affect parsing. No timezone or daylight-saving inference. Chats are not stored by app code, but normal website requests carry routine network metadata. Browser memory and files remain under the user’s device controls.
-
-The test suite checks calculation contracts and invalid inputs. It cannot establish that an input dataset is representative, that a heuristic is scientifically correct for every domain, or that a result is suitable for an automated consequential decision. Read the original source alongside the maintained browser implementation when comparing behavior.
-
-## Local dependency installation
-
-The maintained app is HTML/CSS/JavaScript and needs no Python packages. `requirements.txt` documents this; install development tools with `npm ci` using the pinned Node/npm versions. See [DEPENDENCIES.md](DEPENDENCIES.md). Original prototype requirements are preserved at `archive/prototype-requirements.in` where present; they are not the supported install command.
+[GitHub Issues](https://github.com/subhashdixit/whatsapp-conversation-explorer/issues)
